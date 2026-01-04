@@ -315,7 +315,7 @@ def kernel_shell(disk):
                 target_file = args[0]
                 # Questo è il link RAW del file che hai appena creato al Passaggio 1
                 # Assicurati che l'URL sia corretto (valeraspberry/Terracina-OS)
-                master_list_url = "https://raw.githubusercontent.com/valeraspberry/Terracina-OS/main/PROVIDERS.TXT"
+                master_list_url = "https://raw.githubusercontent.com/valeraspberry/CUSTOM_OS/refs/heads/main/PROVIDERS.TXT"
                 
                 print("CONNECTING TO MASTER SERVER...")
                 try:
@@ -486,21 +486,23 @@ def kernel_shell(disk):
                 print("Usage: COPY [SOURCE] [DESTINATION]")
                 
         elif cmd == "SOURCES":
-            master_list_url = "https://raw.githubusercontent.com/valeraspberry/Terracina-OS/main/PROVIDERS.TXT"
+            url = "https://raw.githubusercontent.com/valeraspberry/CUSTOM_OS/refs/heads/main/PROVIDERS.TXT"
             print("FETCHING REGISTERED PROVIDERS...")
             try:
-                r = requests.get(master_list_url, timeout=5)
+                # Aggiungiamo un timeout leggermente più lungo (10 secondi)
+                r = requests.get(url, timeout=10)
                 if r.status_code == 200:
                     print("\nOFFICIAL TERRACINA PROVIDERS:")
-                    for line in r.text.splitlines():
+                    lines = r.text.strip().splitlines()
+                    for line in lines:
                         if ":" in line:
                             name = line.split(":")[0]
                             print(f" - {name}")
-                    print("") # Riga vuota per pulizia
+                    print(f"TOTAL: {len(lines)} PROVIDERS ONLINE.\n")
                 else:
-                    print("COULD NOT REACH MASTER SERVER.")
-            except:
-                print("NETWORK ERROR.")
+                    print(f"SERVER ERROR: {r.status_code}")
+            except Exception as e:
+                print(f"NETWORK ERROR: {e}")
 
         elif cmd == "MENU":
             os.system('cls' if os.name == 'nt' else 'clear')
