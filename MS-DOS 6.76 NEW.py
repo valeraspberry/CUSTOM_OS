@@ -312,28 +312,46 @@ def kernel_shell(disk):
             
         elif cmd == "GET":
             if args:
-                # Prendiamo il nome esatto scritto dall'utente (es. TEST.EXE o README.TXT)
-                target_file = args[0] 
-                base_url = "https://gist.githubusercontent.com/valeraspberry/225741edcef6bec7777e91d88fe927df/raw/"
+                target_file = args[0]
+                # Questo è il link RAW del file che hai appena creato al Passaggio 1
+                # Assicurati che l'URL sia corretto (valeraspberry/Terracina-OS)
+                master_list_url = "https://raw.githubusercontent.com/valeraspberry/Terracina-OS/main/PROVIDERS.TXT"
                 
-                print(f"CONNECTING TO SERVER...")
+                print("CONNECTING TO MASTER SERVER...")
                 try:
-                    # Cerchiamo il file su GitHub mantenendo le maiuscole/minuscole inserite
-                    r = requests.get(base_url + target_file, timeout=10)
+                    # 1. Scarica la lista dei server
+                    r_list = requests.get(master_list_url, timeout=5)
+                    if r_list.status_code != 200:
+                        print("ERROR: COULD NOT SYNC PROVIDER LIST."); continue
                     
-                    if r.status_code == 200:
-                        # Salviamo sul disco virtuale con il nome originale in maiuscolo
-                        filename = target_file.upper()
-                        disk[filename] = r.text
-                        save_to_disk(disk)
-                        print(f"DOWNLOAD SUCCESSFUL: {filename} SAVED.")
-                    else:
-                        print(f"SERVER ERROR: {r.status_code}. FILE NOT FOUND.")
-                        print(f"HINT: Check if {target_file} exists on Gist.")
+                    providers = r_list.text.splitlines()
+                    found = False
+                    
+                    # 2. Controlla ogni server nella lista
+                    for line in providers:
+                        if ":" in line:
+                            provider_name, base_url = line.split(":", 1)
+                            print(f"SEARCHING IN: {provider_name}...")
+                            
+                            # Prova a scaricare il file da questo specifico server
+                            response = requests.get(base_url + target_file, timeout=5)
+                            
+                            if response.status_code == 200:
+                                filename = target_file.upper()
+                                disk[filename] = response.text
+                                save_to_disk(disk)
+                                print(f"SUCCESS: {filename} DOWNLOADED FROM {provider_name}.")
+                                found = True
+                                break # Se lo trova, si ferma e non cerca negli altri
+                    
+                    if not found:
+                        print(f"FILE '{target_file}' NOT FOUND IN ANY REGISTERED PROVIDER.")
+                        
                 except Exception as e:
-                    print(f"CONNECTION FAILED: {e}")
+                    print(f"NETWORK ERROR: {e}")
             else:
-                print("Usage: GET [FILENAME.EXT]")
+                print("Usage: GET [FILENAME.EXE]")
+
                     
         elif cmd == "SUDO":
             if args and args[0].upper() == "GURU":
@@ -385,6 +403,7 @@ def kernel_shell(disk):
             print(" DISK MANAGMENT:  DIR, TREE, MD, RD, CD")
             print(" SYSTEM:     RUN, TASK, KILL, CLS, TIME, MENU")
             print(" POWER:      SUDO, REBOOT, SHUTDOWN")
+            print(" ONLINE:      GET, SOURCES")
             print("-" * 45)
             print(" Type 'OPEN MANUAL.TXT' for recovery info.")
             print("="*45 + "\n")
@@ -465,6 +484,23 @@ def kernel_shell(disk):
                 print(f"File copied to {dest_path}.")
             else:
                 print("Usage: COPY [SOURCE] [DESTINATION]")
+                
+        elif cmd == "SOURCES":
+            master_list_url = "https://raw.githubusercontent.com/valeraspberry/Terracina-OS/main/PROVIDERS.TXT"
+            print("FETCHING REGISTERED PROVIDERS...")
+            try:
+                r = requests.get(master_list_url, timeout=5)
+                if r.status_code == 200:
+                    print("\nOFFICIAL TERRACINA PROVIDERS:")
+                    for line in r.text.splitlines():
+                        if ":" in line:
+                            name = line.split(":")[0]
+                            print(f" - {name}")
+                    print("") # Riga vuota per pulizia
+                else:
+                    print("COULD NOT REACH MASTER SERVER.")
+            except:
+                print("NETWORK ERROR.")
 
         elif cmd == "MENU":
             os.system('cls' if os.name == 'nt' else 'clear')
