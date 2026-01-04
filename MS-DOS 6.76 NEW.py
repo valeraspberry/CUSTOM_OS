@@ -399,7 +399,7 @@ def kernel_shell(disk):
             print("\n" + "="*45)
             print("         MS-DOS v.6.76 HELP SYSTEM")
             print("="*45)
-            print(" FILE MANAGMENT:  SAVE, OPEN, DEL, REN, FIND, COPY, CUT")
+            print(" FILE MANAGMENT:  SAVE, OPEN, DEL, REN, FIND, COPY, CUT, EDIT")
             print(" DISK MANAGMENT:  DIR, TREE, MD, RD, CD")
             print(" SYSTEM:     RUN, TASK, KILL, CLS, TIME, MENU")
             print(" POWER:      SUDO, REBOOT, SHUTDOWN")
@@ -407,6 +407,26 @@ def kernel_shell(disk):
             print("-" * 45)
             print(" Type 'OPEN MANUAL.TXT' for recovery info.")
             print("="*45 + "\n")
+            
+        elif cmd == "EDIT":
+            if args:
+                filename = args[0].upper()
+                print(f"--- EDITING {filename} ---")
+                print("Type your text. Type 'SAVE' on a new line to finish.")
+                
+                lines = []
+                while True:
+                    line = input("> ")
+                    if line.upper() == "SAVE":
+                        break
+                    lines.append(line)
+                
+                # Uniamo le righe e salviamo nel disco virtuale
+                disk[filename] = "\n".join(lines)
+                save_to_disk(disk)
+                print(f"FILE {filename} SAVED SUCCESSFULLY.")
+            else:
+                print("Usage: EDIT [FILENAME]")
             
             
         elif cmd == "TREE":
