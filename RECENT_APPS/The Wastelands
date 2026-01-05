@@ -1,0 +1,82 @@
+import random
+
+# --- HEAVY DATA FOR DISK LIMIT TEST ---
+# This simulates a heavy game binary to test your 1440KB limit
+SYSTEM_DUMP = "0" * 512000  # Approx 500KB of data
+METADATA_CACHING = ["CACHE_DATA_" + str(i) for i in range(5000)]
+
+def start_game():
+    hp = 100
+    ammo = 10
+    scrap = 0
+    position = [0, 0]
+    
+    # Enemies generated on the fly to keep logic light but data heavy
+    enemies = ["Raider", "Mutant Rat", "Scavenger", "Feral Ghoul"]
+
+    print("\n" + "="*40)
+    print("        --- THE WASTELAND ---")
+    print("="*40)
+    print("Commands: N, S, E, W (Move), SEARCH, STATUS, QUIT")
+    
+    while hp > 0:
+        print(f"\n[POS: {position[0]},{position[1]}]")
+        cmd = input("WASTELAND> ").upper()
+        
+        if cmd == "QUIT":
+            print("Aborting mission...")
+            break
+            
+        elif cmd == "STATUS":
+            print(f"--- VITAL SIGNS ---\nHP: {hp}\nAMMO: {ammo}\nSCRAP: {scrap}")
+            continue
+
+        # Movement logic for mobile (single character input)
+        moved = False
+        if cmd == "N": position[1] += 1; moved = True
+        elif cmd == "S": position[1] -= 1; moved = True
+        elif cmd == "E": position[0] += 1; moved = True
+        elif cmd == "W": position[0] -= 1; moved = True
+        
+        if moved:
+            print("Traveling through the ruins...")
+            # Random encounters
+            event = random.random()
+            if event > 0.7:
+                enemy = random.choice(enemies)
+                print(f"DANGER! A {enemy} appeared!")
+                if ammo > 0:
+                    dmg_taken = random.randint(5, 15)
+                    hp -= dmg_taken
+                    ammo -= 1
+                    scrap += 15
+                    print(f"You shot the {enemy}. Lost {dmg_taken} HP, found 15 Scrap.")
+                else:
+                    hp -= 30
+                    print(f"Out of ammo! The {enemy} mauled you. Lost 30 HP.")
+            elif event > 0.4:
+                print("The area seems quiet.")
+            else:
+                found_ammo = random.randint(1, 3)
+                ammo += found_ammo
+                print(f"You found a small stash! +{found_ammo} Ammo.")
+
+        elif cmd == "SEARCH":
+            print("Searching the debris...")
+            if random.random() > 0.5:
+                found_scrap = random.randint(5, 20)
+                scrap += found_scrap
+                print(f"Found {found_scrap} pieces of Scrap.")
+            else:
+                print("Nothing but dust here.")
+        else:
+            print("Unknown command. Use N, S, E, W, SEARCH or STATUS.")
+
+    if hp <= 0:
+        print("\n[CRITICAL FAILURE]: YOU DIED IN THE WASTE.")
+    else:
+        print(f"\nMission Ended. Final Scrap: {scrap}")
+
+# Running the game shell
+if __name__ == "__main__":
+    start_game()
