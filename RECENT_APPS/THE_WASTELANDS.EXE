@@ -1,9 +1,5 @@
 import random
 
-# --- HEAVY DATA FOR DISK LIMIT TEST (Approx 500KB) ---
-SYSTEM_DUMP = "0" * 512000 
-METADATA_CACHING = ["CACHE_DATA_" + str(i) for i in range(5000)]
-
 def start_game():
     hp = 100
     ammo = 10
