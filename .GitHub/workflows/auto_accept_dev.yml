@@ -1,28 +1,43 @@
-name: Marketplace Recent Bot
+name: Accept New Developer
+
 on:
   issues:
     types: [opened]
 
 jobs:
-  add_to_recent:
+  add-provider:
     if: contains(github.event.issue.title, '[ADD_ME]')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Add to Recent List
+      - name: Parse Issue and Update File
         run: |
-          URL=$(echo "${{ github.event.issue.body }}" | grep "SERVER_URL:" | cut -d ' ' -f 2)
-          NAME=$(echo "${{ github.event.issue.title }}" | cut -d ' ' -f 2)
-          # Specifically adding to RECENT list
-          echo "$NAME:$URL" >> RECENT_PROVIDERS.TXT
+          TITLE="${{ github.event.issue.title }}"
+          BODY="${{ github.event.issue.body }}"
           
-      - name: Sync to GitHub
+          # Estrae il nome dal titolo (rimuovendo [ADD_ME])
+          DEV_NAME=$(echo "$TITLE" | sed 's/\[ADD_ME\] //')
+          
+          # Estrae l'URL dal corpo
+          DEV_URL=$(echo "$BODY" | grep "SERVER_URL:" | awk '{print $2}')
+          
+          if [ -n "$DEV_URL" ]; then
+            echo "$DEV_NAME:$DEV_URL" >> RECENT_PROVIDERS.TXT
+            echo "Aggiunto $DEV_NAME con URL $DEV_URL"
+          else
+            echo "URL non trovato nel corpo della Issue"
+            exit 1
+          fi
+
+      - name: Commit and Push changes
         run: |
-          git config --global user.name "Terracina-Bot"
-          git config --global user.email "bot@terracina-os.com"
+          git config --global user.name "Marketplace-Bot"
+          git config --global user.email "bot@github.com"
           git add RECENT_PROVIDERS.TXT
-          git commit -m "New Community Dev: ${{ github.event.issue.title }}"
+          git commit -m "Nuovo developer: ${{ github.event.issue.user.login }}"
           git push
           
