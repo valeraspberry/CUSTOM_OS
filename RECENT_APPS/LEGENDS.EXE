@@ -1,85 +1,100 @@
-import random
+import random, time
 
 def play():
-    # Load persistent data from C:\
-    gold = int(disk.get("GOLD.DAT", 0))
-    hp = 100
-    level = int(disk.get("LVL.DAT", 1))
+    # Load Stats with Safety Defaults
+    try:
+        gold = int(disk.get("GOLD.DAT", 0))
+        lvl = int(disk.get("LVL.DAT", 1))
+        atk = int(disk.get("ATK.DAT", 10))
+    except:
+        gold, lvl, atk = 0, 1, 10
+        
+    hp, max_hp = 100, 100
     
-    w, h = 20, 8
-    p = [1, 1]
-    exit_p = [w-2, h-2]
-    
-    # Entity placements
-    monster = [random.randint(5, 15), random.randint(2, 6)]
-    gold_pile = [random.randint(2, 15), random.randint(2, 6)]
+    while True:
+        # Map Config
+        w, h = 20, 8
+        p, ex = [1, 1], [18, 6]
+        walls = [[random.randint(2,18), random.randint(1,6)] for _ in range(8)]
+        mon = [random.randint(10, 18), random.randint(1, 6)]
+        gld_p = [random.randint(2, 15), random.randint(1, 6)]
+        haz = [[random.randint(2, 17), random.randint(1, 6)] for _ in range(3)]
 
-    def show_stats():
-        print(f"\n[ LVL: {level} | HP: {hp} | GOLD: {gold} ]")
-        print("-" * (w + 2))
+        while True:
+            # Render Engine
+            print(f"\n[ LVL: {lvl} | HP: {hp}/{max_hp} | ATK: {atk} | GOLD: {gold} ]")
+            print("-" * (w + 2))
+            for y in range(h):
+                line = "|"
+                for x in range(w):
+                    c = [x, y]
+                    dist = abs(x-p[0]) + abs(y-p[1])
+                    if c == p: line += "@"
+                    elif x == 0 or x == w-1 or y == 0 or y == h-1: line += "#"
+                    elif dist <= 3:
+                        if c == ex: line += "E"
+                        elif c in walls: line += "#"
+                        elif c == mon: line += "&"
+                        elif c == gld_p: line += "G"
+                        elif c in haz: line += "!"
+                        else: line += " "
+                    else: line += "."
+                print(line + "|")
+            print("-" * (w + 2))
 
-    while hp > 0:
-        show_stats()
-        # Map Drawing
-        for y in range(h):
-            line = "|"
-            for x in range(w):
-                curr = [x, y]
-                if curr == p: line += "@"
-                elif curr == exit_p: line += "E"
-                elif curr == monster: line += "&"
-                elif curr == gold_pile: line += "G"
-                elif x == 0 or x == w-1 or y == 0 or y == h-1: line += "#"
-                else: line += " "
-            print(line + "|")
-        print("-" * (w + 2))
-        
-        move = input("MOVE (WASD) or Q to EXIT > ").upper()
-        if move == 'Q': break
-        
-        old_p = list(p)
-        if move == 'W': p[1] -= 1
-        elif move == 'S': p[1] += 1
-        elif move == 'A': p[0] -= 1
-        elif move == 'D': p[0] += 1
-        
-        # Wall collision
-        if p[0] <= 0 or p[0] >= w-1 or p[1] <= 0 or p[1] >= h-1:
-            p = old_p
+            move = input("MOVE (WASD/Q) > ").upper().strip()
+            if not move or move == 'Q': return
+            
+            old_p = list(p)
+            if 'W' in move: p[1] -= 1
+            elif 'S' in move: p[1] += 1
+            elif 'A' in move: p[0] -= 1
+            elif 'D' in move: p[0] += 1
+            
+            # Collision
+            if p in walls or p[0] <= 0 or p[0] >= w-1 or p[1] <= 0 or p[1] >= h-1:
+                p = old_p
 
-        # Combat Logic
-        if p == monster:
-            print("\n!!! ENCOUNTER: SHADOW KERNEL !!!")
-            damage = random.randint(10, 30)
-            hp -= damage
-            print(f"You defeated it but took {damage} DMG!")
-            monster = [-1, -1] # Monster defeated
-            gold += 100
+            # Hunter AI Logic
+            if p != old_p and mon != [-1, -1]:
+                m_old = list(mon)
+                if mon[0] < p[0]: mon[0] += 1
+                elif mon[0] > p[0]: mon[0] -= 1
+                elif mon[1] < p[1]: mon[1] += 1
+                elif mon[1] > p[1]: mon[1] -= 1
+                if mon in walls or mon == ex: mon = m_old
 
-        # Gold Logic
-        if p == gold_pile:
-            gold += 50
-            print("\n++ Found 50 Gold ++")
-            gold_pile = [-1, -1]
+            # Combat System
+            if p == mon:
+                m_hp = 20 + (lvl * 10)
+                print("\n!!! VIRUS INTERCEPTED !!!")
+                while m_hp > 0 and hp > 0:
+                    atk_dir = random.choice(['W', 'A', 'S', 'D'])
+                    hints = {'W':'UP','S':'DOWN','A':'LEFT','D':'RIGHT'}
+                    blks = {'W':'S','S':'W','A':'D','D':'A'}
+                    print(f"\nVIRUS: {m_hp} | HP: {hp} | BLOCK {hints[atk_dir]} (OPPOSITE)")
+                    start = time.time()
+                    ans = input("> ").upper().strip()
+                    if time.time() - start > max(0.4, 1.5 - (lvl*0.1)):
+                        hp -= 20; print("TIMEOUT!")
+                    elif ans == blks.get(atk_dir, ''):
+                        m_hp -= atk; print("HIT!")
+                    else:
+                        hp -= 15; print("FAILED!")
+                if hp <= 0:
+                    print("\n[ SYSTEM CRASH ]"); return
+                gold += 200; mon = [-1, -1]
 
-        # Exit Logic
-        if p == exit_p:
-            print("\n*** LEVEL CLEARED! SAVING TO DISK... ***")
-            new_lvl = level + 1
-            disk["LVL.DAT"] = str(new_lvl)
-            disk["GOLD.DAT"] = str(gold)
-            save_to_disk(disk)
-            # Reset for next level
-            p = [1, 1]
-            hp = 100
-            level = new_lvl
-            monster = [random.randint(5, 15), random.randint(2, 6)]
-            gold_pile = [random.randint(2, 15), random.randint(2, 6)]
-
-    if hp <= 0:
-        print("\n[ SYSTEM FAILURE: PLAYER HP 0 ]")
-        print("Game Over. Your gold was saved.")
-        disk["GOLD.DAT"] = str(gold)
-        save_to_disk(disk)
-
+            # Shop & Exit
+            if p == ex:
+                print("\n--- SECTOR CLEAR ---")
+                print("1. Repair(50G) | 2. ATK(100G) | 3. Next Level")
+                c = input("> ")
+                if c == '1' and gold >= 50: gold -= 50; hp = max_hp
+                elif c == '2' and gold >= 100: gold -= 100; atk += 10
+                lvl += 1
+                # Atomic Save to Disk
+                disk["GOLD.DAT"], disk["LVL.DAT"], disk["ATK.DAT"] = str(gold), str(lvl), str(atk)
+                save_to_disk(disk)
+                break
 play()
