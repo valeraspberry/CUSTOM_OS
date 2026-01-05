@@ -1,0 +1,85 @@
+import random
+
+def play():
+    # Load persistent data from C:\
+    gold = int(disk.get("GOLD.DAT", 0))
+    hp = 100
+    level = int(disk.get("LVL.DAT", 1))
+    
+    w, h = 20, 8
+    p = [1, 1]
+    exit_p = [w-2, h-2]
+    
+    # Entity placements
+    monster = [random.randint(5, 15), random.randint(2, 6)]
+    gold_pile = [random.randint(2, 15), random.randint(2, 6)]
+
+    def show_stats():
+        print(f"\n[ LVL: {level} | HP: {hp} | GOLD: {gold} ]")
+        print("-" * (w + 2))
+
+    while hp > 0:
+        show_stats()
+        # Map Drawing
+        for y in range(h):
+            line = "|"
+            for x in range(w):
+                curr = [x, y]
+                if curr == p: line += "@"
+                elif curr == exit_p: line += "E"
+                elif curr == monster: line += "&"
+                elif curr == gold_pile: line += "G"
+                elif x == 0 or x == w-1 or y == 0 or y == h-1: line += "#"
+                else: line += " "
+            print(line + "|")
+        print("-" * (w + 2))
+        
+        move = input("MOVE (WASD) or Q to EXIT > ").upper()
+        if move == 'Q': break
+        
+        old_p = list(p)
+        if move == 'W': p[1] -= 1
+        elif move == 'S': p[1] += 1
+        elif move == 'A': p[0] -= 1
+        elif move == 'D': p[0] += 1
+        
+        # Wall collision
+        if p[0] <= 0 or p[0] >= w-1 or p[1] <= 0 or p[1] >= h-1:
+            p = old_p
+
+        # Combat Logic
+        if p == monster:
+            print("\n!!! ENCOUNTER: SHADOW KERNEL !!!")
+            damage = random.randint(10, 30)
+            hp -= damage
+            print(f"You defeated it but took {damage} DMG!")
+            monster = [-1, -1] # Monster defeated
+            gold += 100
+
+        # Gold Logic
+        if p == gold_pile:
+            gold += 50
+            print("\n++ Found 50 Gold ++")
+            gold_pile = [-1, -1]
+
+        # Exit Logic
+        if p == exit_p:
+            print("\n*** LEVEL CLEARED! SAVING TO DISK... ***")
+            new_lvl = level + 1
+            disk["LVL.DAT"] = str(new_lvl)
+            disk["GOLD.DAT"] = str(gold)
+            save_to_disk(disk)
+            # Reset for next level
+            p = [1, 1]
+            hp = 100
+            level = new_lvl
+            monster = [random.randint(5, 15), random.randint(2, 6)]
+            gold_pile = [random.randint(2, 15), random.randint(2, 6)]
+
+    if hp <= 0:
+        print("\n[ SYSTEM FAILURE: PLAYER HP 0 ]")
+        print("Game Over. Your gold was saved.")
+        disk["GOLD.DAT"] = str(gold)
+        save_to_disk(disk)
+
+play()
