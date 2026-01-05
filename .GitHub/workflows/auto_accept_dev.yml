@@ -1,33 +1,28 @@
-name: Marketplace Automation Bot
+name: Marketplace Recent Bot
 on:
   issues:
     types: [opened]
 
 jobs:
-  add_provider:
-    # Only runs if the issue title starts with [ADD_ME]
+  add_to_recent:
     if: contains(github.event.issue.title, '[ADD_ME]')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Process Developer Request
+      - name: Add to Recent List
         run: |
-          # Extract the URL from the issue body
           URL=$(echo "${{ github.event.issue.body }}" | grep "SERVER_URL:" | cut -d ' ' -f 2)
-          # Extract the Developer Name from the issue title
           NAME=$(echo "${{ github.event.issue.title }}" | cut -d ' ' -f 2)
+          # Specifically adding to RECENT list
+          echo "$NAME:$URL" >> RECENT_PROVIDERS.TXT
           
-          # Append the new provider to the global list
-          echo "$NAME:$URL" >> PROVIDERS.TXT
-          echo "Successfully added $NAME to the provider list."
-          
-      - name: Sync Changes to GitHub
+      - name: Sync to GitHub
         run: |
           git config --global user.name "Terracina-Bot"
           git config --global user.email "bot@terracina-os.com"
-          git add PROVIDERS.TXT
-          git commit -m "New Developer Added: ${{ github.event.issue.title }}"
+          git add RECENT_PROVIDERS.TXT
+          git commit -m "New Community Dev: ${{ github.event.issue.title }}"
           git push
           
