@@ -1,0 +1,78 @@
+import random, time
+
+def play():
+    # --- GAME STATE ---
+    cash = float(disk.get("CASH.DAT", 400.0))
+    # format: "Name": [Stock, Performance, Base_Cost]
+    cpus = {"i3-12th": [0, 10, 80], "R7-7800X3D": [0, 50, 350], "R9-9950X": [0, 90, 600]}
+    gpus = {"GTX 1650": [0, 10, 150], "RTX 4070": [0, 45, 600], "RTX 5090": [0, 100, 2000]}
+    
+    # Licenses (Days remaining)
+    lic = {"Intel": 0, "AMD": 0, "NVIDIA": 0}
+    
+    day = 1
+    while True:
+        print(f"\n[ DAY {day} | CASH: €{cash:.2f} ]")
+        print("1. MARKET (Buy Parts) | 2. BUILD (Sell PC) | 3. LICENSES | 4. NEXT DAY")
+        cmd = input("> ")
+
+        if cmd == "1":
+            print("\n--- COMPONENT MARKET ---")
+            print(f"1. i3-12th (€80) | 2. R7-7800X3D (€350) | 3. RTX 5090 (€2000)")
+            part = input("Buy (1-3): ")
+            # Example: Check license before buying high-end
+            if part == "3":
+                if lic["NVIDIA"] > 0 and cash >= 2000:
+                    gpus["RTX 5090"][0] += 1
+                    cash -= 2000
+                    print("Added RTX 5090 to stock!")
+                else: print("Error: No NVIDIA License or Cash!")
+
+        elif cmd == "2":
+            # ASSEMBLY LOGIC
+            print("\n--- SELECT CPU ---")
+            for k, v in cpus.items(): print(f"{k}: {v[0]} in stock")
+            c_choice = input("Select CPU Name: ")
+            
+            print("--- SELECT GPU ---")
+            for k, v in gpus.items(): print(f"{k}: {v[0]} in stock")
+            g_choice = input("Select GPU Name: ")
+
+            if cpus.get(c_choice, [0])[0] > 0 and gpus.get(g_choice, [0])[0] > 0:
+                # Calculate Specs
+                pc_perf = cpus[c_choice][1] + gpus[g_choice][1]
+                pc_cost = cpus[c_choice][2] + gpus[g_choice][2]
+                
+                price = float(input(f"Build Cost: €{pc_cost}. Set Sale Price: €"))
+                
+                # CUSTOMER AI
+                cust_budget = random.randint(300, 4000)
+                cust_perf_req = random.randint(10, 150)
+                
+                print(f"Customer enters... Budget: €{cust_budget} | Req. Perf: {cust_perf_req}")
+                
+                if price <= cust_budget and pc_perf >= cust_perf_req:
+                    print("SALE SUCCESS! You earned profit!")
+                    cash += price
+                    cpus[c_choice][0] -= 1
+                    gpus[g_choice][0] -= 1
+                else:
+                    print("Customer walked out. Price too high or PC too weak.")
+            else: print("Missing parts!")
+
+        elif cmd == "3":
+            print("\n--- BUY LICENSES (7 Days) ---")
+            print("1. Intel (€100) | 2. AMD (€100) | 3. NVIDIA (€250)")
+            l_choi = input("> ")
+            if l_choi == "3" and cash >= 250:
+                lic["NVIDIA"] += 7; cash -= 250
+                print("NVIDIA License Active!")
+
+        elif cmd == "4":
+            day += 1
+            # Decay Licenses
+            for k in lic: lic[k] = max(0, lic[k] - 1)
+            # Taxes/Rent
+            cash -= 50
+            print(f"Daily expenses paid (-€50). Taxes due.")
+            if cash < 0: print("GAME OVER"); return
