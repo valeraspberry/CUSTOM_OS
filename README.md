@@ -43,7 +43,7 @@ If you want to become a developer and add your server to the `PROVIDERS.TXT` lis
 Do you want to publish your own apps or games for this OS? Our **Marketplace-Bot** handles everything automatically!
 
 ### How to add your server:
-1. **Host your files**: Create a GitHub repository and put your `.EXE` files inside a folder named `RECENT_APPS`.
+1. **Host your files**: Create a GitHub repository and put your `.EXE` or `.BAT` files inside a folder named `RECENT_APPS`.
 2. **Open an Issue**: Go to the **Issues** tab of this repository and click **New Issue**.
 3. **Format your request**:
    * **Title**: `[ADD_ME] your_username`
@@ -51,8 +51,8 @@ Do you want to publish your own apps or games for this OS? Our **Marketplace-Bot
 4. **Wait for the Bot**: Our automated system will process your request in seconds. Once you see a green checkmark on your Issue, your server is live!
 
 ### Requirements:
-* Files must have the `.EXE` extension to be recognized by the OS.
+* Files must have the `.EXE` or `.BAT` extensions to be recognized by the OS.
 * Your server URL must point to the root of your repository (ending with `/main/`).
-* 
+* The file name (included the extension) must be all capital letters (dont write `app_name.exe`, write `APP_NAME.EXE`.
 
 Enjoy the OS!
