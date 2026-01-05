@@ -1,0 +1,33 @@
+name: Marketplace Automation Bot
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  add_provider:
+    # Only runs if the issue title starts with [ADD_ME]
+    if: contains(github.event.issue.title, '[ADD_ME]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Process Developer Request
+        run: |
+          # Extract the URL from the issue body
+          URL=$(echo "${{ github.event.issue.body }}" | grep "SERVER_URL:" | cut -d ' ' -f 2)
+          # Extract the Developer Name from the issue title
+          NAME=$(echo "${{ github.event.issue.title }}" | cut -d ' ' -f 2)
+          
+          # Append the new provider to the global list
+          echo "$NAME:$URL" >> PROVIDERS.TXT
+          echo "Successfully added $NAME to the provider list."
+          
+      - name: Sync Changes to GitHub
+        run: |
+          git config --global user.name "Terracina-Bot"
+          git config --global user.email "bot@terracina-os.com"
+          git add PROVIDERS.TXT
+          git commit -m "New Developer Added: ${{ github.event.issue.title }}"
+          git push
+          
